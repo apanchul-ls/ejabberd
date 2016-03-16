@@ -407,13 +407,16 @@ execute_command2(Command, Arguments) ->
     Module = Command#ejabberd_commands.module,
     Function = Command#ejabberd_commands.function,
     ?DEBUG("Executing command ~p:~p with Args=~p", [Module, Function, Arguments]),
-    try apply(Module, Function, Arguments) of
-	Response ->
+    Res = try apply(Module, Function, Arguments) of
+    Response ->
+      ?DEBUG("Response executing command ~p:~p with Args=~p was ~p", [Module, Function, Arguments, Response]),
 	    Response
     catch
-	Problem ->
-	    {error, Problem}
-    end.
+      Problem ->
+        {error, Problem}
+    end,
+    ?DEBUG("TRACE: Executed command ~p:~p with Args=~p~nRes: ~p", [Module, Function, Arguments, Res]),
+  Res.
 
 -spec get_tags_commands() -> [{string(), [string()]}].
 
