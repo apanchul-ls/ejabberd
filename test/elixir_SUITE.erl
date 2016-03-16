@@ -28,11 +28,13 @@ init_per_testcase(_TestCase, Config) ->
 all() ->
     case is_elixir_available() of
         true ->
+            ct:pal("TRACE === is_elixir_available() true", []),
             Dir = test_dir(),
             filelib:fold_files(Dir, ".*\.exs", false,
                                fun(Filename, Acc) -> [list_to_atom(filename:basename(Filename)) | Acc] end,
                                []);
         false ->
+            ct:pal("TRACE === is_elixir_available() false", []),
             []
     end.
 
@@ -69,6 +71,7 @@ run_elixir_test(Func) ->
     'Elixir.Code':load_file(list_to_binary(filename:join(test_dir(), atom_to_list(Func)))),
     %% I did not use map syntax, so that this file can still be build under R16
     ResultMap = 'Elixir.ExUnit':run(),
+    ct:pal("TRACE === ResultMap ~p", [ResultMap]),
     case maps:find(failures, ResultMap) of
         {ok, 0} ->
             %% Zero failures

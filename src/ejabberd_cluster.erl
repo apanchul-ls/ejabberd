@@ -55,8 +55,10 @@ multicall(Nodes, Module, Function, Args) ->
 -spec join(node()) -> ok | {error, any()}.
 
 join(Node) ->
+    ?DEBUG("TRACE: ejabberd_cluster:join/1 (~p)~n", [Node]),
     case {node(), net_adm:ping(Node)} of
         {Node, _} ->
+            ?DEBUG("TRACE: ERROR: Attempted to join self(~p)~n", [Node]),
             {error, {not_master, Node}};
         {_, pong} ->
             application:stop(ejabberd),
@@ -68,17 +70,20 @@ join(Node) ->
             spawn(fun()  ->
                 lists:foreach(fun(Table) ->
                             Type = call(Node, mnesia, table_info, [Table, storage_type]),
+                            ?DEBUG("TRACE: add_table_copy(Table ~p, node ~p, type ~p)~n", [Table, node(), Type]),
                             mnesia:add_table_copy(Table, node(), Type)
                     end, mnesia:system_info(tables)--[schema])
                 end),
             application:start(ejabberd);
         _ ->
+            ?DEBUG("ERROR: Attempted to join failed, no ping  (~p)~n", [Node]),
             {error, {no_ping, Node}}
     end.
 
 -spec leave(node()) -> ok | {error, any()}.
 
 leave(Node) ->
+    ?DEBUG("TRACE: leaving node (~p)~n", [Node]),
     case {node(), net_adm:ping(Node)} of
         {Node, _} ->
             Cluster = get_nodes()--[Node],
@@ -92,8 +97,10 @@ leave(Node) ->
             end
     end.
 leave([], Node) ->
+    ?DEBUG("TRACE: ERROR: leave/2 (Node ~p is leaving []?!)~n", [Node]),
     {error, {no_cluster, Node}};
 leave([Master|_], Node) ->
+    ?DEBUG("TRACE: leave/2 (Node ~p is leaving Master ~p)~n", [Node, Master]),
     application:stop(ejabberd),
     application:stop(mnesia),
     call(Master, mnesia, del_table_copy, [schema, Node]),

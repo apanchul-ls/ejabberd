@@ -111,6 +111,7 @@ get_commands_spec() ->
 %% -- public modules functions
 
 update() ->
+    ?DEBUG("TRACE =========  Adding sources ~p", [?REPOS]),
     add_sources(?REPOS),
     Res = lists:foldl(fun({Package, Spec}, Acc) ->
                 Path = proplists:get_value(url, Spec, ""),
@@ -128,7 +129,9 @@ update() ->
 
 available() ->
     Jungle = modules_spec(sources_dir(), "*/*"),
+  ?DEBUG("TRACE =========  Jungle ~p", [Jungle]),
     Standalone = modules_spec(sources_dir(), "*"),
+    ?DEBUG("TRACE =========  Standalone ~p", [Standalone]),
     lists:keysort(1,
         lists:foldl(fun({Key, Val}, Acc) ->
                 lists:keystore(Key, 1, Acc, {Key, Val})
@@ -320,7 +323,9 @@ extract_github_master(Repos, DestDir) ->
     end,
     case extract(zip, geturl(Url++"/archive/master.zip"), DestDir) of
         ok ->
+            ?DEBUG("TRACE =========  extracting zip of this: ~p", [Url++"/archive/master.zip"]),
             RepDir = filename:join(DestDir, module_name(Repos)),
+            ?DEBUG("TRACE =========  Renaming into this: ~p", [RepDir]),
             file:rename(RepDir++"-master", RepDir);
         Error ->
             Error
@@ -558,6 +563,7 @@ fetch_rebar_deps() ->
         Deps ->
             filelib:ensure_dir(filename:join("deps", ".")),
             lists:foreach(fun({_App, Cmd}) ->
+                        ?DEBUG("TRACE =========  About to run ~p", [Cmd]),
                         os:cmd("cd deps; "++Cmd++"; cd ..")
                 end, Deps)
     end.
